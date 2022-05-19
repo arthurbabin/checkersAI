@@ -1,6 +1,7 @@
 [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 # checkersAI
 Artificial Intelligence (Minimax algorithm) playing Checkers
+<br>
 <img src="https://github.com/arthurbabin/checkersAI/blob/main/screenshots/example.png?raw=true" width="300" height="324"/>
 ## Notation of Forsyth-Edwards (FEN)
 - The 8 lines of the board are separated by `/`
