@@ -17,13 +17,13 @@ while not iboard.done:
     pygame.display.flip()
 
     #Checks if we need to call minimax to play against the player
-    if not iboard.isPlaying:
+    if not iboard.isPlaying and not iboard.done:
         pygame.mixer.Sound.play(moveSound)
         time.sleep(0.5)
-        iboard.isPlaying = True
         iboard.board = minimax(iboard.board,-1)[0]
+        iboard.isPlaying = True
+        iboard.board.updateWinner()
         pygame.mixer.Sound.play(moveSound)
-
 
 #    if screenshotCount%10 and iboard.possibleMoves:
 #        screenshotName = f"screenshots/screenshot{screenshotCount}.png"

@@ -4,7 +4,7 @@ from minimax import *
 
 class InteractiveBoard:
     #Lengths and sizes
-    size_board_displayed = (8,8)
+    size_board_displayed = (10,10)
     widthCell,heightCell = (100,100)
     margin = 0
     size_screen = (
@@ -43,9 +43,9 @@ class InteractiveBoard:
         self.possibleMoves = []
         self.possibleDestinations=[]
         self.selectedPiece = None
-        self.isPlaying = 1
-        self.board = SimpleBoard()
+        self.isPlaying = -1
         self.done = False
+        self.board = SimpleBoard()
         self.screen = pygame.display.set_mode(self.size_screen)
         pygame.display.set_caption(self.caption)
 
@@ -59,8 +59,11 @@ class InteractiveBoard:
     def mouseClickEvent(self,x,y):
         """Handle mouse click event"""
         xCell,yCell=self.getCellFromCoordinates(x,y)
-        if self.isPlaying and (xCell+yCell)%2:
+        #If the user is playing and the cell can house a piece
+        if not self.done and self.isPlaying and (xCell+yCell)%2:
             cellType = self.board.getTypeOfCell(xCell,yCell)
+
+            #Select the piece housed by the cell
             if cellType==1:
                 self.possibleMoves = []
                 moves = self.board.getAllPossibleMoves((xCell,yCell))
@@ -71,9 +74,13 @@ class InteractiveBoard:
                     self.possibleDestinations.append(mdest)
                     self.possibleMoves.append(m)
                 self.selectedPiece = (xCell,yCell)
+
+            #Checks if the selected cell is a possible move for the
+            #selected piece
             elif cellType==0:
                 n = len(self.possibleDestinations)
                 i = 0
+
                 while self.selectedPiece and i<n:
                     if (xCell,yCell)==self.possibleDestinations[i]:
                         newBoard = self.possibleMoves[i]["newBoard"] 
@@ -82,12 +89,16 @@ class InteractiveBoard:
                         self.possibleMoves = []
                         self.possibleDestinations = []
                         self.isPlaying = False
+                        self.board.updateWinner()
+                        return
                     i+=1
 
     def update(self):
         """Update the board on the screen"""
         self.screen.fill(self.BORDER_COLOR)
         l = self.widthCell/2
+
+        #Draw Board
         for row in range(self.size_board_displayed[1]):        
             for column in range(self.size_board_displayed[0]):
                 #Draw Cell Background
@@ -134,20 +145,28 @@ class InteractiveBoard:
                                 centerCell,
                                 l*0.2
                                 )
-        notationSurface = self.font.render(
-                self.board.F_E_Notation(),
-                False, 
-                self.SECONDARY_COLOR)				    
+
+        #Display notation text at the bottom
+        if self.board.winner:
+            #Display winning text
+            notationSurface = self.font.render(
+                    f"{self.board.winner} pieces won !",
+                    False, 
+                    self.SECONDARY_COLOR)				    
+        else:
+            #Display FEN notation
+            notationSurface = self.font.render(
+                    self.board.F_E_Notation(),
+                    False, 
+                    self.SECONDARY_COLOR)				    
+
         self.screen.blit(
                 notationSurface,
                 notationSurface.get_rect(center=self.notationCenter))
 
 
-
     def handleEvent(self,e):
-        global ready
-        global done
-        global indications
+        """Event Handler for the InteractiveBoard"""
         if e.type == pygame.QUIT:            
             self.done = True
         elif self.isPlaying:

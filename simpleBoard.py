@@ -3,31 +3,24 @@ import time
 import numpy as np
 
 class SimpleBoard:
-    width = 8
-    startingBoard = np.array(
-            [
-                [ 0,-1, 0,-1, 0,-1, 0,-1],
-                [-1, 0,-1, 0,-1, 0,-1, 0],
-                [ 0,-1, 0,-1, 0,-1, 0,-1],
-                [ 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0],
-                [ 1, 0, 1, 0, 1, 0, 1, 0],
-                [ 0, 1, 0, 1, 0, 1, 0, 1],
-                [ 1, 0, 1, 0, 1, 0, 1, 0]])
+    width = 10
 
-    startingBoard = np.array(
-            [
-                [ 0,-1, 0,-1, 0,-1, 0,-1],
-                [-1, 0,-1, 0,-1, 0,-1, 0],
-                [ 0,-1, 0, 0, 0, 0, 0,-1],
-                [ 0, 0,-1, 0,-1, 0, 0, 0],
-                [ 0, 1, 0, 0, 0, 0, 0, 0],
-                [ 1, 0, 0, 0, 1, 0, 1, 0],
-                [ 0, 1, 0, 1, 0, 1, 0, 1],
-                [ 1, 0, 1, 0, 1, 0, 1, 0]])
+    startingBoard = np.zeros((width,width))
+    for row in range(3):
+        for col in range(width):
+            if (row+col)%2:
+                startingBoard[row,col]=-1
+    for row in range(width-3,width):
+        for col in range(width):
+            if (row+col)%2:
+                startingBoard[row,col]=1
+
+    winner = ""
 
     def __init__(self,config=startingBoard):
         self.board = np.zeros((self.width,self.width))
+
+        #Copy the structure of config into self.board
         for row in range(self.width):
             for column in range(self.width):
                 self.board[row][column]=config[row][column]
@@ -100,24 +93,35 @@ class SimpleBoard:
         neighbours = []
         currentType = self.getTypeOfCell(line,column)
 
-        if isCrowned:
-            pass
+        rangePiece = [-1,1]
+
+        #The position has 4 direct neighbours
+        #(line-1,col-1)
+        #(line+1,col-1)
+        #(line-1,col+1)
+        #(line+1,col+1)
+        for i in rangePiece:
+            posX = line+i
+            for j in rangePiece:
+                posY = column+j
+                #Check if the neighbour is on the board
+                if self.isAValidCell((posX,posY)):
+                    #Add direct neighbours only if the piece didn't eat
+                    if not hasEaten and self.isEmpty((posX,posY)):
+                        neighbours.append((posX,posY))
+                    #else add further neighbour if empty
+                    elif self.isAnEnnemy((posX,posY),currentType):
+                        if self.isAValidCell((posX-i,posY-j)):
+                            if self.isEmpty((posX-i,posY-j)):
+                                neighbours.append((posX-i,posY-j))
+
+        #Filter backward moves for pieces without crown and who didn't eat
+        if hasEaten or isCrowned:
+            validNeighbours = neighbours
         else:
-            for i in [-1,1]:
-                posX = line-i
-                for j in [-1,1]:
-                    posY = column-j
-                    if self.isAValidCell((posX,posY)):
-                        if not hasEaten and self.isEmpty((posX,posY)):
-                            neighbours.append((posX,posY))
-                        elif self.isAnEnnemy((posX,posY),currentType):
-                            if self.isAValidCell((posX-i,posY-j)):
-                                if self.isEmpty((posX-i,posY-j)):
-                                    neighbours.append((posX-i,posY-j))
-        validNeighbours = []
-        for n in neighbours:
-            if self.isAValidCell(n) and self.isEmpty(n):
-                if hasEaten or isCrowned or n[0]*currentType<currentType*line:
+            validNeighbours = []
+            for n in neighbours:
+                if n[0]*currentType<currentType*line:
                     validNeighbours.append(n)
 
         return validNeighbours
@@ -185,7 +189,12 @@ class SimpleBoard:
             newBoard.board[c]=0
 
         #Move piece
-        newBoard.board[destination]=self.board[origin]
+        if destination[0]==0 and oType==1:
+            newBoard.board[destination]=2
+        elif destination[0]==self.width-1 and oType==-1:
+            newBoard.board[destination]=-2
+        else:
+            newBoard.board[destination]=self.board[origin]
         newBoard.board[origin]=0
 
         recap["possible"]=True
@@ -247,9 +256,8 @@ class SimpleBoard:
                     score+=-4
                 else:
                     score+=self.board[row,col]
-
-                if col==0 or col==self.width-1:
-                    score+=np.sign(self.board[row,col])*0.5
+                    if col==0 or col==self.width-1:
+                        score+=np.sign(self.board[row,col])*0.5
         return score
 
     def getAllPiecesPositions(self,pieceType=0):
@@ -262,6 +270,29 @@ class SimpleBoard:
                     positions.append((row,col))
         return positions
 
+    def whoWins(self):
+        """Returns 1 if white pieces won, -1 if black pieces won otherwise"""
+        for pieceType in [-1,1]:
+            #Check if there are still pieces of pieceType on the board
+            positions = self.getAllPiecesPositions(pieceType)
+            if not positions:
+                return -pieceType
+
+            #Check if there are still possible moves for pieceType
+            moves = []
+            for pos in positions:
+                moves+=self.getAllPossibleMoves(pos)
+            if not moves:
+                return -pieceType
+        return 0
+
+    def updateWinner(self):
+        """Update self.winner according to the board"""
+        w = self.whoWins()
+        if w == 1:
+            self.winner = "White"
+        elif w == -1:
+            self.winner = "Black"
     
     def print(self,prefix=""):
         """Pretty prints the board on the standard output"""
@@ -287,7 +318,7 @@ class SimpleBoard:
 
 if __name__=="__main__":
     sb = SimpleBoard()
-    assert sb.F_E_Notation()=="wwww/wwww/wwww/4/4/bbbb/bbbb/bbbb"
+    assert sb.F_E_Notation()=="wwwww/wwwww/wwwww/5/5/5/5/bbbbb/bbbbb/bbbbb"
     for i in range(sb.width):
         assert sb[0][i]==sb.board[0,i]
     sb.print()
@@ -322,14 +353,16 @@ if __name__=="__main__":
 
     startingBoard = np.array(
             [
-                [ 0,-1, 0,-1, 0, 1, 0,-1],
-                [-1, 0,-1, 0,-1, 0, 0, 0],
-                [ 0, 0, 0, 0, 0,-1, 0, 0],
-                [-1, 0,-1, 0, 0, 0, 0, 0],
-                [ 0, 0, 0, 0, 0, 1, 0, 0],
-                [ 0, 0, 1, 0, 1, 0, 1, 0],
-                [ 0, 1, 0, 1, 0, 1, 0, 1],
-                [ 1, 0, 1, 0, 1, 0, 1, 0]])
+                [ 0,-1, 0,-1, 0, 1, 0,-1, 0, 0],
+                [-1, 0,-1, 0,-1, 0, 0, 0, 1, 0],
+                [ 0, 0, 0, 0, 0,-1, 0, 0, 0, 0],
+                [-1, 0,-1, 0, 0, 0, 0, 0, 1, 0],
+                [ 0, 0, 0, 0, 0,-1, 0, 0, 0, 0],
+                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+                [ 0, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+                [ 0, 1, 0, 1, 0, 1, 0, 1, 0, 0],
+                [ 1, 0, 1, 0, 1, 0, 1, 0, 0, 0]])
     sb = SimpleBoard(startingBoard)
     sb.print()
     print(sb.getNeighboursOfCell(5,0,isCrowned=False,hasEaten=True))

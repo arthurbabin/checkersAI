@@ -31,6 +31,8 @@ def minimax(board,pieceType):
         moves = board.getAllPossibleMoves(pos)
         for move in moves:
             newBoard = move["newBoard"]
+            if newBoard.whoWins()==pieceType:
+                return newBoard,newBoard.score()
             resultBoard,resultScore = bestMove(newBoard,-pieceType)
             if resultScore*pieceType>bestScore*pieceType:
                 bestBoard,bestScore=newBoard,resultScore
