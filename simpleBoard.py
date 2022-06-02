@@ -111,9 +111,9 @@ class SimpleBoard:
                         neighbours.append((posX,posY))
                     #else add further neighbour if empty
                     elif self.isAnEnnemy((posX,posY),currentType):
-                        if self.isAValidCell((posX-i,posY-j)):
-                            if self.isEmpty((posX-i,posY-j)):
-                                neighbours.append((posX-i,posY-j))
+                        if self.isAValidCell((posX+i,posY+j)):
+                            if self.isEmpty((posX+i,posY+j)):
+                                neighbours.append((posX+i,posY+j))
 
         #Filter backward moves for pieces without crown and who didn't eat
         if hasEaten or isCrowned:
@@ -358,7 +358,7 @@ if __name__=="__main__":
                 [ 0, 0, 0, 0, 0,-1, 0, 0, 0, 0],
                 [-1, 0,-1, 0, 0, 0, 0, 0, 1, 0],
                 [ 0, 0, 0, 0, 0,-1, 0, 0, 0, 0],
-                [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [ 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
                 [ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
                 [ 0, 0, 1, 0, 1, 0, 1, 0, 1, 0],
                 [ 0, 1, 0, 1, 0, 1, 0, 1, 0, 0],
